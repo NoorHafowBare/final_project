@@ -1,23 +1,47 @@
+"""Flask web application for emotion detection.
+
+This module provides a Flask web interface for analyzing emotions in text input.
+It includes routes for serving the main page and processing emotion detection requests.
+"""
+
 from flask import Flask, request, jsonify, render_template
 from EmotionDetection.emotion_detection import emotion_detector  # Adjust the path if needed
 
+# Create an instance of the Flask class
 app = Flask(__name__)
 
 @app.route("/")
 def index():
-    # Serve the index.html from the templates folder
+    """Route to serve the index page.
+    
+    Returns:
+        str: The index.html template from the templates folder.
+    """
     return render_template("index.html")
 
 @app.route("/emotionDetector", methods=["POST"])
 def emotion_detector_route():
-    text_to_analyze = request.form['textToAnalyze']
+    """Route to handle emotion detection requests.
     
-    # Call the emotion_detector function to get the emotion analysis result
+    Receives a POST request with text input, processes it using emotion_detector,
+    and returns formatted output with detected emotions.
+    
+    Returns:
+        str: Formatted output showing detected emotions and dominant emotion.
+        JSON: Error message if input is invalid or emotion detection fails.
+    """
+    # Get the input text from the form
+    text_to_analyze = request.form['textToAnalyze']
+    # Handle blank or invalid input
+    if not text_to_analyze.strip():
+        return jsonify({"error": "Invalid text! Please try again."}), 400
+
+    # Call the emotion_detector function
     result = emotion_detector(text_to_analyze)
 
-    # Handle the case if the emotion detection result is invalid
-    if not result:
-        return "Invalid input or error with emotion detection service."
+    # If the result is invalid
+    if not result or 'error' in result:
+        return jsonify({"error": "Failed to fetch emotion data"}), 400
 
     # Prepare the formatted response
     formatted_output = (
@@ -33,4 +57,6 @@ def emotion_detector_route():
     return formatted_output
 
 if __name__ == "__main__":
-    app.run(debug=True)  # Run the Flask app in debug mode
+    # Entry point to run the Flask application
+    app.run(debug=True)
+    
